@@ -1,0 +1,39 @@
+data:
+  input: fpb.jsonl
+  fixes: fpb_fixes.json
+  allagree: Sentences_AllAgree.txt   # original FPB v1.0 (latin-1, "sentence@label"), from takala/financial_phrasebank
+  native: gazdasagi_mondatok.xlsx    # native HU sentences from economic news portals, BPC only (labels unused)
+  native_sheet: Sheet1               # the clean sheet (the first one has broken encoding)
+  out_dir: data
+  test_size: 0.2
+  split_seed: 42
+  curve_sizes: [100, 250, 500, 1000]   # full train is always added as the last point
+
+seeds: [1, 2, 3]   # training seeds; also select the learning-curve subsets
+
+# kind: decoder = LoRA on instruct checkpoint, encoder = full fine-tuning
+models:
+  - {name: qwen3-0.6b,     path: models/Qwen3-0.6B,                 kind: decoder, hf: Qwen/Qwen3-0.6B}
+  - {name: qwen3-1.7b,     path: models/Qwen3-1.7B,                 kind: decoder, hf: Qwen/Qwen3-1.7B}
+  - {name: qwen3-4b,       path: models/Qwen3-4B,                   kind: decoder, hf: Qwen/Qwen3-4B}
+  - {name: llama3.2-1b,    path: models/Llama-3.2-1B-Instruct,      kind: decoder, hf: meta-llama/Llama-3.2-1B-Instruct}
+  - {name: llama3.2-3b,    path: models/Llama-3.2-3B-Instruct,      kind: decoder, hf: meta-llama/Llama-3.2-3B-Instruct}
+  - {name: gemma3-1b,      path: models/gemma-3-1b-it,              kind: decoder, hf: google/gemma-3-1b-it}
+  - {name: eurollm-1.7b,   path: models/EuroLLM-1.7B-Instruct,      kind: decoder, hf: utter-project/EuroLLM-1.7B-Instruct}
+  - {name: salamandra-2b,  path: models/salamandra-2b-instruct,     kind: decoder, hf: BSC-LT/salamandra-2b-instruct}
+  - {name: hubert,         path: models/hubert-base-cc,             kind: encoder, hf: SZTAKI-HLT/hubert-base-cc}
+  - {name: xlmr-base,      path: models/xlm-roberta-base,           kind: encoder, hf: FacebookAI/xlm-roberta-base}
+
+max_len: 256
+
+# Shared hyperparameters, no per-model tuning; no validation set, last state is evaluated
+train:
+  batch_size: 16
+  epochs: 3
+  min_steps: 150          # train for max(epochs, min_steps)
+  warmup_ratio: 0.06
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  lr_decoder: 2.0e-4      # LoRA
+  lr_encoder: 2.0e-5      # full fine-tuning
+  lora: {r: 16, alpha: 32, dropout: 0.05, target_modules: all-linear}

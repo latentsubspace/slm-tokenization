@@ -1,0 +1,12 @@
+# Whitelist: ignore everything, then allow only the public code files.
+/*
+!/.gitignore
+!/README.md
+!/LICENSE
+!/requirements.txt
+!/config.yaml
+!/prepare_data.py
+!/tokstats.py
+!/gpu_check.py
+!/run.py
+!/make_report.py
